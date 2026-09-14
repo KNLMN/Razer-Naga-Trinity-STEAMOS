@@ -67,6 +67,10 @@
         "from": "scripts/naga-remapper.py",
         "to": "scripts/naga-remapper.py"
       }
+    ],
+    "npmRebuild": false,
+    "asarUnpack": [
+      "node_modules/usb/**"
     ]
   }
 }
