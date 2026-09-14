@@ -10,6 +10,8 @@ export function ButtonsPanel() {
   const { t } = useTranslation()
   const profile = useActiveProfile()
   const updateActive = useNagaStore((state) => state.updateActive)
+  const showExperimental = useNagaStore((state) => state.showExperimental)
+  const showBaseButtons = window.naga?.platform !== 'linux' || showExperimental
 
   const updateButton = (next: ButtonBinding) =>
     updateActive((current) => ({
@@ -24,7 +26,8 @@ export function ButtonsPanel() {
 
   return (
     <div className="section buttons-section">
-      <div className="card buttons-card">
+      {showBaseButtons && (
+        <div className="card buttons-card">
         <header className="card-head">
           <div>
             <p className="eyebrow">{t('buttons.baseEyebrow')}</p>
@@ -44,7 +47,8 @@ export function ButtonsPanel() {
             />
           ))}
         </div>
-      </div>
+        </div>
+      )}
 
       <div className="card buttons-card">
         <header className="card-head">
