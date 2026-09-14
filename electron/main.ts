@@ -11,7 +11,7 @@ import {
 } from 'electron'
 import { join } from 'node:path'
 import { applyHardwareProfile, applyRgbOnly, listNagaDevices, setRgbOff } from './nagaDriver'
-import { registerProfileShortcuts, unregisterAllMacroShortcuts } from './macroEngine'
+import { registerProfileShortcuts, unregisterAllMacroShortcuts } from './macroEngine'\nimport { applyLinuxProfile, stopLinuxRemapper } from './linuxRemapper'
 import {
   deleteProfile,
   duplicateProfile,
@@ -241,7 +241,7 @@ ipcMain.handle('profile:delete', async (_event, id: string) => deleteProfile(id)
 ipcMain.handle('profile:duplicate', async (_event, id: string) => duplicateProfile(id))
 ipcMain.handle('profile:set-active', async (_event, id: string) => setActiveProfile(id))
 ipcMain.handle('profile:apply', async (_event, profile: NagaProfile) => {
-  const result = await applyHardwareProfile(profile)
+  const result =\n    process.platform === 'linux'\n      ? await applyLinuxProfile(profile)\n      : await applyHardwareProfile(profile)
   if (result.ok) {
     await upsertProfile(profile)
     await setActiveProfile(profile.id)
