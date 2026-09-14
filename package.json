@@ -62,6 +62,12 @@
       ],
       "category": "Utility",
       "artifactName": "Naga-Trinity-Control-${version}-${arch}.${ext}"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "scripts/naga-remapper.py",
+        "to": "scripts/naga-remapper.py"
+      }
+    ]
   }
-}
+}\n
