@@ -56,8 +56,12 @@ def build_mapping(config):
             mapping[source_code] = None
         elif action == "key":
             mapping[source_code] = resolve_key(binding.get("value", ""))
-        else:
+        elif action == "default":
             mapping[source_code] = source_code
+        else:
+            raise ValueError(
+                f"button {button}: action '{action}' is not yet supported on SteamOS"
+            )
     return mapping
 
 
