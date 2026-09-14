@@ -288,8 +288,13 @@ app.whenReady().then(async () => {
     app.dock?.hide()
   }
 
-  // RGB nach Start automatisch wiederherstellen (daemon-Pattern).
-  void applyActiveProfile()
+  // During initial Linux bring-up, never write a complete default profile merely
+  // because the UI was opened. macOS keeps its established daemon behaviour.
+  if (process.platform === 'darwin') {
+    void applyActiveProfile()
+  } else {
+    console.log('[naga] Linux safe start: automatic profile apply is disabled')
+  }
 })
 
 app.on('window-all-closed', () => {
