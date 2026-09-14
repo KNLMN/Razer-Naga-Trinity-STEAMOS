@@ -22,7 +22,7 @@ export function LightingPanel() {
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!window.naga?.previewRgb) return
+    if (!window.naga?.previewRgb || window.naga.platform === 'linux') return
     if (previewTimer.current) clearTimeout(previewTimer.current)
     previewTimer.current = setTimeout(() => {
       void window.naga.previewRgb(rgb)
@@ -49,6 +49,9 @@ export function LightingPanel() {
           <span className="badge">{t(`effects.${rgb.effect}.label`)}</span>
         </header>
         <MouseVisualizer profile={profile} />
+        {window.naga?.platform === 'linux' && (
+          <p className="muted">Hardware lighting is not yet supported on SteamOS; this is a visual preview.</p>
+        )}
         <p className="muted">{t(`effects.${rgb.effect}.description`)}</p>
       </div>
 
