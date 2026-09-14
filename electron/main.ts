@@ -299,12 +299,10 @@ app.whenReady().then(async () => {
     app.dock?.hide()
   }
 
-  // During initial Linux bring-up, never write a complete default profile merely
-  // because the UI was opened. macOS keeps its established daemon behaviour.
-  if (process.platform === 'darwin') {
+  // Re-activate the stored profile after login. Linux uses only the software
+  // remapper here; macOS keeps its established hardware/profile behaviour.
+  if (process.platform === 'darwin' || process.platform === 'linux') {
     void applyActiveProfile()
-  } else {
-    console.log('[naga] Linux safe start: automatic profile apply is disabled')
   }
 })
 
