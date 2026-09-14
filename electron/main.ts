@@ -11,7 +11,8 @@ import {
 } from 'electron'
 import { join } from 'node:path'
 import { applyHardwareProfile, applyRgbOnly, listNagaDevices, setRgbOff } from './nagaDriver'
-import { registerProfileShortcuts, unregisterAllMacroShortcuts } from './macroEngine'\nimport { applyLinuxProfile, stopLinuxRemapper } from './linuxRemapper'
+import { registerProfileShortcuts, unregisterAllMacroShortcuts } from './macroEngine'
+import { applyLinuxProfile, stopLinuxRemapper } from './linuxRemapper'
 import {
   deleteProfile,
   duplicateProfile,
