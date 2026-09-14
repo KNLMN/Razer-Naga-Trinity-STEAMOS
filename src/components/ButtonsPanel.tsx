@@ -84,6 +84,15 @@ interface BindingRowProps {
 function BindingRow({ binding, macros, onChange }: BindingRowProps) {
   const { t, i18n } = useTranslation()
   const showInput = needsValue(binding.action)
+  const simpleSteamOs =
+    window.naga?.platform === 'linux' && !useNagaStore((state) => state.showExperimental)
+  const actionIds = simpleSteamOs
+    ? BUTTON_ACTION_IDS.filter((action) => ['default', 'key', 'disabled'].includes(action))
+    : BUTTON_ACTION_IDS
+  const displayIndex =
+    simpleSteamOs && binding.id.startsWith('side-')
+      ? binding.id.replace('side-', '')
+      : binding.hardwareIndex
   // Base-Button-Labels über i18n auflösen; gespeicherter Label dient als Fallback (z.B. für custom Side-Button-Namen).
   const labelKey = `buttons.labels.${binding.id}`
   const displayLabel = i18n.exists(labelKey) ? (t(labelKey) as string) : binding.label
@@ -91,7 +100,7 @@ function BindingRow({ binding, macros, onChange }: BindingRowProps) {
   return (
     <div className="binding-row">
       <div className="binding-label">
-        <span className="binding-index">#{binding.hardwareIndex}</span>
+        <span className="binding-index">#{displayIndex}</span>
         <strong>{displayLabel}</strong>
       </div>
       <select
@@ -104,7 +113,7 @@ function BindingRow({ binding, macros, onChange }: BindingRowProps) {
           })
         }
       >
-        {BUTTON_ACTION_IDS.map((action) => (
+        {actionIds.map((action) => (
           <option key={action} value={action}>
             {t(`actions.${action}`)}
           </option>
