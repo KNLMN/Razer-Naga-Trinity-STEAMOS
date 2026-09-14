@@ -84,8 +84,9 @@ interface BindingRowProps {
 function BindingRow({ binding, macros, onChange }: BindingRowProps) {
   const { t, i18n } = useTranslation()
   const showInput = needsValue(binding.action)
+  const showExperimental = useNagaStore((state) => state.showExperimental)
   const simpleSteamOs =
-    window.naga?.platform === 'linux' && !useNagaStore((state) => state.showExperimental)
+    window.naga?.platform === 'linux' && !showExperimental
   const actionIds = simpleSteamOs
     ? BUTTON_ACTION_IDS.filter((action) => ['default', 'key', 'disabled'].includes(action))
     : BUTTON_ACTION_IDS
