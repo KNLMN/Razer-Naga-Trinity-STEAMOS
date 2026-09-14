@@ -9,6 +9,7 @@ import type {
 } from './types'
 
 const api = {
+  platform: process.platform,
   scanDevice: () => ipcRenderer.invoke('device:scan') as Promise<DeviceInfo>,
   readStore: () => ipcRenderer.invoke('store:read') as Promise<ProfileStore>,
   writeStore: (store: ProfileStore) =>
