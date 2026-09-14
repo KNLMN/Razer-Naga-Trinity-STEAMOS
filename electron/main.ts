@@ -194,10 +194,15 @@ const applyActiveProfile = async () => {
   const store = await readStore()
   const active = store.profiles.find((p) => p.id === store.activeProfileId)
   if (!active) return
-  const hwResult = await applyHardwareProfile(active)
-  console.log('[naga] applyHardwareProfile:', hwResult.ok ? 'OK' : 'FAIL', '-', hwResult.message)
-  const reg = registerProfileShortcuts(active)
-  console.log('[naga] macroShortcuts:', reg)
+  const result =
+    process.platform === 'linux'
+      ? await applyLinuxProfile(active)
+      : await applyHardwareProfile(active)
+  console.log('[naga] apply profile:', result.ok ? 'OK' : 'FAIL', '-', result.message)
+  if (process.platform === 'darwin') {
+    const reg = registerProfileShortcuts(active)
+    console.log('[naga] macroShortcuts:', reg)
+  }
 }
 
 const restoreActiveProfileRgb = async () => {
@@ -241,12 +246,17 @@ ipcMain.handle('profile:delete', async (_event, id: string) => deleteProfile(id)
 ipcMain.handle('profile:duplicate', async (_event, id: string) => duplicateProfile(id))
 ipcMain.handle('profile:set-active', async (_event, id: string) => setActiveProfile(id))
 ipcMain.handle('profile:apply', async (_event, profile: NagaProfile) => {
-  const result =\n    process.platform === 'linux'\n      ? await applyLinuxProfile(profile)\n      : await applyHardwareProfile(profile)
+  const result =
+    process.platform === 'linux'
+      ? await applyLinuxProfile(profile)
+      : await applyHardwareProfile(profile)
   if (result.ok) {
     await upsertProfile(profile)
     await setActiveProfile(profile.id)
-    const reg = registerProfileShortcuts(profile)
-    console.log('[naga] macroShortcuts after apply:', reg)
+    if (process.platform === 'darwin') {
+      const reg = registerProfileShortcuts(profile)
+      console.log('[naga] macroShortcuts after apply:', reg)
+    }
   }
   return result
 })
@@ -311,4 +321,5 @@ app.on('activate', () => {
 app.on('before-quit', () => {
   isQuitting = true
   unregisterAllMacroShortcuts()
+  void stopLinuxRemapper()
 })
