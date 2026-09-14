@@ -13,6 +13,7 @@ export function Sidebar() {
   const rescan = useNagaStore((state) => state.rescan)
 
   const activeStage = active.dpi.stages[active.dpi.activeStage - 1] ?? active.dpi.stages[0]
+  const isLinux = window.naga?.platform === 'linux'
   const currentLang = (i18n.resolvedLanguage ?? i18n.language ?? 'de').slice(0, 2) as SupportedLanguage
 
   const switchLanguage = (code: SupportedLanguage) => {
@@ -82,9 +83,9 @@ export function Sidebar() {
               <div className="profile-info">
                 <span>{item.name}</span>
                 <small>
-                  {item.dpi.stages[item.dpi.activeStage - 1]?.x ?? 1800} {t('sidebar.dpiSuffix')}
-                  <span className="dot-sep">·</span>
-                  {item.pollingRate}Hz
+                  {isLinux
+                    ? 'Side buttons + RGB'
+                    : `${item.dpi.stages[item.dpi.activeStage - 1]?.x ?? 1800} ${t('sidebar.dpiSuffix')} · ${item.pollingRate}Hz`}
                 </small>
               </div>
               <div
@@ -98,10 +99,12 @@ export function Sidebar() {
       </div>
 
       <footer className="sidebar-footer">
-        <div className="footer-stage">
-          <span>{t('sidebar.activeStage')}</span>
-          <strong>{activeStage?.x ?? 1800} {t('sidebar.dpiSuffix')}</strong>
-        </div>
+        {!isLinux && (
+          <div className="footer-stage">
+            <span>{t('sidebar.activeStage')}</span>
+            <strong>{activeStage?.x ?? 1800} {t('sidebar.dpiSuffix')}</strong>
+          </div>
+        )}
         <div className="lang-switch" role="group" aria-label={t('topbar.language')}>
           <Languages size={13} />
           {SUPPORTED_LANGUAGES.map((code) => (
