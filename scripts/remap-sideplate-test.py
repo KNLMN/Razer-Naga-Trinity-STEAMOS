@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Temporary SteamOS remap test for the Naga Trinity 12-button side plate."""
 
+import select
 import signal
 import sys
 
@@ -72,6 +73,10 @@ def main():
     try:
         source.grab()
         while not stopping:
+            readable, _, _ = select.select([source.fd], [], [], 0.25)
+            if not readable:
+                continue
+
             for event in source.read():
                 if event.type != ecodes.EV_KEY or event.code not in BUTTON_NAMES:
                     continue
@@ -86,10 +91,6 @@ def main():
                         f"Button {BUTTON_NAMES[event.code]} -> {output_name}",
                         flush=True,
                     )
-    except BlockingIOError:
-        # InputDevice is non-blocking; select() below is avoided to keep this
-        # diagnostic dependency-free. read_loop() blocks efficiently instead.
-        pass
     except OSError as error:
         print(f"FAIL while remapping: {error}", file=sys.stderr)
         return 4
