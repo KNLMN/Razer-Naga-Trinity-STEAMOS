@@ -17,6 +17,8 @@ export function LightingPanel() {
   const { t } = useTranslation()
   const profile = useActiveProfile()
   const updateRgb = useNagaStore((state) => state.updateRgb)
+  const showExperimental = useNagaStore((state) => state.showExperimental)
+  const simpleSteamOs = window.naga?.platform === 'linux' && !showExperimental
   const { rgb } = profile
 
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -50,11 +52,12 @@ export function LightingPanel() {
         </header>
         <MouseVisualizer profile={profile} />
         {window.naga?.platform === 'linux' && (
-          <p className="muted">Hardware lighting is not yet supported on SteamOS; this is a visual preview.</p>
+          <p className="muted">Lighting changes are applied to the mouse when you activate the profile.</p>
         )}
         <p className="muted">{t(`effects.${rgb.effect}.description`)}</p>
       </div>
 
+      {(!simpleSteamOs) && (
       <div className="card effects-card">
         <header className="card-head">
           <div>
@@ -76,6 +79,7 @@ export function LightingPanel() {
           ))}
         </div>
       </div>
+      )}
 
       <div className="card color-card">
         <header className="card-head">
@@ -91,9 +95,13 @@ export function LightingPanel() {
             type="color"
             value={rgb.color}
             onChange={(event) =>
-              updateRgb((current) => ({ ...current, color: event.target.value }))
+              updateRgb((current) => ({
+                ...current,
+                color: event.target.value,
+                effect: simpleSteamOs ? 'static' : current.effect,
+              }))
             }
-            disabled={!supportsColor && rgb.effect !== 'spectrum'}
+            disabled={!simpleSteamOs && !supportsColor && rgb.effect !== 'spectrum'}
           />
           <div className="swatches">
             {COLOR_SWATCHES.map((swatch) => (
@@ -103,7 +111,13 @@ export function LightingPanel() {
                 className={`swatch ${rgb.color === swatch ? 'selected' : ''}`}
                 style={{ background: swatch }}
                 aria-label={`${t('lighting.colorAria')} ${swatch}`}
-                onClick={() => updateRgb((current) => ({ ...current, color: swatch }))}
+                onClick={() =>
+                  updateRgb((current) => ({
+                    ...current,
+                    color: swatch,
+                    effect: simpleSteamOs ? 'static' : current.effect,
+                  }))
+                }
               />
             ))}
           </div>
@@ -210,6 +224,7 @@ export function LightingPanel() {
         )}
       </div>
 
+      {(!simpleSteamOs) && (
       <div className="card zones-card">
         <header className="card-head">
           <div>
@@ -282,6 +297,7 @@ export function LightingPanel() {
           })}
         </div>
       </div>
+      )}
     </div>
   )
 }
