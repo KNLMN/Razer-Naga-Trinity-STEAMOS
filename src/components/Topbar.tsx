@@ -1,5 +1,6 @@
 import {
   Cpu,
+  FlaskConical,
   Keyboard,
   Lightbulb,
   Loader2,
@@ -13,11 +14,11 @@ import { useTranslation } from 'react-i18next'
 import { useActiveProfile, useNagaStore } from '../store/useNagaStore'
 import type { SectionId } from '../store/useNagaStore'
 
-const SECTIONS: Array<{ id: SectionId; icon: typeof Lightbulb }> = [
+const SECTIONS: Array<{ id: SectionId; icon: typeof Lightbulb; experimental?: boolean }> = [
   { id: 'lighting', icon: Lightbulb },
-  { id: 'performance', icon: SlidersHorizontal },
   { id: 'buttons', icon: Keyboard },
-  { id: 'macros', icon: Cpu },
+  { id: 'performance', icon: SlidersHorizontal, experimental: true },
+  { id: 'macros', icon: Cpu, experimental: true },
 ]
 
 export function Topbar() {
@@ -32,6 +33,19 @@ export function Topbar() {
   const deleteProfile = useNagaStore((state) => state.deleteProfile)
   const isApplying = useNagaStore((state) => state.isApplying)
   const dirty = useNagaStore((state) => state.hasUnsavedChanges)
+  const isLinux = window.naga?.platform === 'linux'
+  const showExperimental = useNagaStore((state) => state.showExperimental)
+  const toggleExperimental = useNagaStore((state) => state.toggleExperimental)
+  const visibleSections = SECTIONS.filter(
+    (item) => !isLinux || showExperimental || !item.experimental,
+  )
+
+  const handleExperimentalToggle = () => {
+    if (showExperimental && (section === 'performance' || section === 'macros')) {
+      setSection('lighting')
+    }
+    toggleExperimental()
+  }
 
   return (
     <header className="topbar">
@@ -84,13 +98,19 @@ export function Topbar() {
             ) : (
               <Zap size={15} />
             )}
-            {isApplying ? t('topbar.applying') : t('topbar.applyToMouse')}
+            {isApplying
+              ? isLinux
+                ? 'Activating…'
+                : t('topbar.applying')
+              : isLinux
+                ? 'Activate profile'
+                : t('topbar.applyToMouse')}
           </button>
         </div>
       </div>
 
       <nav className="section-tabs" role="tablist">
-        {SECTIONS.map(({ id, icon: Icon }) => (
+        {visibleSections.map(({ id, icon: Icon }) => (
           <button
             key={id}
             role="tab"
@@ -103,6 +123,17 @@ export function Topbar() {
             {t(`sections.${id}`)}
           </button>
         ))}
+        {isLinux && (
+          <button
+            type="button"
+            className={`section-tab ${showExperimental ? 'active' : ''}`}
+            onClick={handleExperimentalToggle}
+            aria-pressed={showExperimental}
+          >
+            <FlaskConical size={15} />
+            Experimental
+          </button>
+        )}
       </nav>
     </header>
   )

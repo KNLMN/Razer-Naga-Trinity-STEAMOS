@@ -20,10 +20,12 @@ export interface NagaState {
   notice: (ApplyResult & { tone: 'info' | 'success' | 'error' }) | null
   isApplying: boolean
   hasUnsavedChanges: boolean
+  showExperimental: boolean
 
   init(): Promise<void>
   rescan(): Promise<void>
   setSection(section: SectionId): void
+  toggleExperimental(): void
   selectProfile(id: string): Promise<void>
   createProfile(): Promise<void>
   duplicateProfile(): Promise<void>
@@ -132,6 +134,7 @@ export const useNagaStore = create<NagaState>((set, get) => ({
   notice: null,
   isApplying: false,
   hasUnsavedChanges: false,
+  showExperimental: false,
 
   async init() {
     if (!window.naga) return
@@ -150,6 +153,10 @@ export const useNagaStore = create<NagaState>((set, get) => ({
 
   setSection(section) {
     set({ section })
+  },
+
+  toggleExperimental() {
+    set((state) => ({ showExperimental: !state.showExperimental }))
   },
 
   async selectProfile(id) {

@@ -10,6 +10,8 @@ export function ButtonsPanel() {
   const { t } = useTranslation()
   const profile = useActiveProfile()
   const updateActive = useNagaStore((state) => state.updateActive)
+  const showExperimental = useNagaStore((state) => state.showExperimental)
+  const showBaseButtons = window.naga?.platform !== 'linux' || showExperimental
 
   const updateButton = (next: ButtonBinding) =>
     updateActive((current) => ({
@@ -24,7 +26,8 @@ export function ButtonsPanel() {
 
   return (
     <div className="section buttons-section">
-      <div className="card buttons-card">
+      {showBaseButtons && (
+        <div className="card buttons-card">
         <header className="card-head">
           <div>
             <p className="eyebrow">{t('buttons.baseEyebrow')}</p>
@@ -44,7 +47,8 @@ export function ButtonsPanel() {
             />
           ))}
         </div>
-      </div>
+        </div>
+      )}
 
       <div className="card buttons-card">
         <header className="card-head">
@@ -80,6 +84,16 @@ interface BindingRowProps {
 function BindingRow({ binding, macros, onChange }: BindingRowProps) {
   const { t, i18n } = useTranslation()
   const showInput = needsValue(binding.action)
+  const showExperimental = useNagaStore((state) => state.showExperimental)
+  const simpleSteamOs =
+    window.naga?.platform === 'linux' && !showExperimental
+  const actionIds = simpleSteamOs
+    ? BUTTON_ACTION_IDS.filter((action) => ['default', 'key', 'disabled'].includes(action))
+    : BUTTON_ACTION_IDS
+  const displayIndex =
+    simpleSteamOs && binding.id.startsWith('side-')
+      ? binding.id.replace('side-', '')
+      : binding.hardwareIndex
   // Base-Button-Labels über i18n auflösen; gespeicherter Label dient als Fallback (z.B. für custom Side-Button-Namen).
   const labelKey = `buttons.labels.${binding.id}`
   const displayLabel = i18n.exists(labelKey) ? (t(labelKey) as string) : binding.label
@@ -87,7 +101,7 @@ function BindingRow({ binding, macros, onChange }: BindingRowProps) {
   return (
     <div className="binding-row">
       <div className="binding-label">
-        <span className="binding-index">#{binding.hardwareIndex}</span>
+        <span className="binding-index">#{displayIndex}</span>
         <strong>{displayLabel}</strong>
       </div>
       <select
@@ -100,7 +114,7 @@ function BindingRow({ binding, macros, onChange }: BindingRowProps) {
           })
         }
       >
-        {BUTTON_ACTION_IDS.map((action) => (
+        {actionIds.map((action) => (
           <option key={action} value={action}>
             {t(`actions.${action}`)}
           </option>

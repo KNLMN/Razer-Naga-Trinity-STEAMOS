@@ -10,8 +10,9 @@ import {
   Tray,
 } from 'electron'
 import { join } from 'node:path'
-import { applyHardwareProfile, applyRgbOnly, listNagaDevices, setRgbOff } from './nagaDriver'
+import { applyHardwareProfile, applyLinuxRgb, applyRgbOnly, listNagaDevices, setRgbOff } from './nagaDriver'
 import { registerProfileShortcuts, unregisterAllMacroShortcuts } from './macroEngine'
+import { applyLinuxProfile, stopLinuxRemapper } from './linuxRemapper'
 import {
   deleteProfile,
   duplicateProfile,
@@ -190,14 +191,34 @@ const createTray = () => {
   })
 }
 
+const applyProfileForPlatform = async (profile: NagaProfile) => {
+  if (process.platform !== 'linux') {
+    return applyHardwareProfile(profile)
+  }
+
+  await stopLinuxRemapper()
+  const rgb = await applyLinuxRgb(profile.rgb)
+  const remap = await applyLinuxProfile(profile)
+  if (!remap.ok) return remap
+
+  return {
+    ...remap,
+    message: rgb.ok
+      ? 'SteamOS profile activated. Lighting and side-button remapping are running.'
+      : `Side-button remapping is active, but lighting failed: ${rgb.message}`,
+  }
+}
+
 const applyActiveProfile = async () => {
   const store = await readStore()
   const active = store.profiles.find((p) => p.id === store.activeProfileId)
   if (!active) return
-  const hwResult = await applyHardwareProfile(active)
-  console.log('[naga] applyHardwareProfile:', hwResult.ok ? 'OK' : 'FAIL', '-', hwResult.message)
-  const reg = registerProfileShortcuts(active)
-  console.log('[naga] macroShortcuts:', reg)
+  const result = await applyProfileForPlatform(active)
+  console.log('[naga] apply profile:', result.ok ? 'OK' : 'FAIL', '-', result.message)
+  if (process.platform === 'darwin') {
+    const reg = registerProfileShortcuts(active)
+    console.log('[naga] macroShortcuts:', reg)
+  }
 }
 
 const restoreActiveProfileRgb = async () => {
@@ -215,6 +236,8 @@ const shouldDimOnLock = async () => {
 }
 
 const registerPowerHandlers = () => {
+  if (process.platform !== 'darwin') return
+
   powerMonitor.on('lock-screen', () => {
     void shouldDimOnLock().then((dim) => {
       if (dim) void setRgbOff()
@@ -241,12 +264,14 @@ ipcMain.handle('profile:delete', async (_event, id: string) => deleteProfile(id)
 ipcMain.handle('profile:duplicate', async (_event, id: string) => duplicateProfile(id))
 ipcMain.handle('profile:set-active', async (_event, id: string) => setActiveProfile(id))
 ipcMain.handle('profile:apply', async (_event, profile: NagaProfile) => {
-  const result = await applyHardwareProfile(profile)
+  const result = await applyProfileForPlatform(profile)
   if (result.ok) {
     await upsertProfile(profile)
     await setActiveProfile(profile.id)
-    const reg = registerProfileShortcuts(profile)
-    console.log('[naga] macroShortcuts after apply:', reg)
+    if (process.platform === 'darwin') {
+      const reg = registerProfileShortcuts(profile)
+      console.log('[naga] macroShortcuts after apply:', reg)
+    }
   }
   return result
 })
@@ -288,8 +313,11 @@ app.whenReady().then(async () => {
     app.dock?.hide()
   }
 
-  // RGB nach Start automatisch wiederherstellen (daemon-Pattern).
-  void applyActiveProfile()
+  // Re-activate the stored profile after login. Linux uses only the software
+  // remapper here; macOS keeps its established hardware/profile behaviour.
+  if (process.platform === 'darwin' || process.platform === 'linux') {
+    void applyActiveProfile()
+  }
 })
 
 app.on('window-all-closed', () => {
@@ -306,4 +334,5 @@ app.on('activate', () => {
 app.on('before-quit', () => {
   isQuitting = true
   unregisterAllMacroShortcuts()
+  void stopLinuxRemapper()
 })

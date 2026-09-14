@@ -519,3 +519,62 @@ export const applyRgbOnly = async (rgb: RgbSettings): Promise<ApplyResult> => {
     if (device) closeDevice(device)
   }
 }
+
+const releaseInterface = (iface: Device['interfaces'][number]) =>
+  new Promise<void>((resolve, reject) => {
+    iface.release(true, (error) => (error ? reject(error) : resolve()))
+  })
+
+export const applyLinuxRgb = async (rgb: RgbSettings): Promise<ApplyResult> => {
+  let device: Device | undefined
+  let iface: Device['interfaces'][number] | undefined
+  let detached = false
+  let claimed = false
+
+  try {
+    device = openDevice()
+    iface = device.interfaces.find((candidate) => candidate.interfaceNumber === 2)
+    if (!iface) throw new Error('Razer USB interface 2 was not found.')
+
+    if (iface.isKernelDriverActive()) {
+      iface.detachKernelDriver()
+      detached = true
+    }
+
+    iface.claim()
+    claimed = true
+    cachedInterface = 0x02
+    await applyRgb(device, rgb)
+
+    return {
+      ok: true,
+      message: 'SteamOS hardware lighting applied.',
+      stage: 'rgb',
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : 'Unknown SteamOS RGB error.',
+      stage: 'rgb',
+    }
+  } finally {
+    if (iface && claimed) {
+      try {
+        await releaseInterface(iface)
+      } catch {
+        // Reattach below remains the important recovery action.
+      }
+    }
+    if (iface && detached) {
+      try {
+        iface.attachKernelDriver()
+      } catch (error) {
+        console.error(
+          '[naga] Could not reattach usbhid; reconnect the mouse:',
+          error instanceof Error ? error.message : error,
+        )
+      }
+    }
+    if (device) closeDevice(device)
+  }
+}
