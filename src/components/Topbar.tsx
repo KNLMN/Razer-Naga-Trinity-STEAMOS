@@ -32,6 +32,7 @@ export function Topbar() {
   const deleteProfile = useNagaStore((state) => state.deleteProfile)
   const isApplying = useNagaStore((state) => state.isApplying)
   const dirty = useNagaStore((state) => state.hasUnsavedChanges)
+  const isLinux = window.naga?.platform === 'linux'
 
   return (
     <header className="topbar">
@@ -84,7 +85,13 @@ export function Topbar() {
             ) : (
               <Zap size={15} />
             )}
-            {isApplying ? t('topbar.applying') : t('topbar.applyToMouse')}
+            {isApplying
+              ? isLinux
+                ? 'Activating…'
+                : t('topbar.applying')
+              : isLinux
+                ? 'Activate profile'
+                : t('topbar.applyToMouse')}
           </button>
         </div>
       </div>
