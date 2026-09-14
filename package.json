@@ -2,7 +2,7 @@
   "name": "naga-trinity-control",
   "private": true,
   "version": "0.1.0",
-  "description": "Electron controller for Razer Naga Trinity profiles, DPI and RGB.",
+  "description": "Cross-platform Electron controller for Razer Naga Trinity profiles, DPI and RGB.",
   "type": "module",
   "main": "dist-electron/main.cjs",
   "scripts": {
@@ -11,7 +11,9 @@
     "build:electron": "rm -rf dist-electron && mkdir -p dist-electron && esbuild electron/main.ts --bundle --platform=node --format=cjs --external:electron --external:usb --outfile=dist-electron/main.cjs && esbuild electron/preload.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist-electron/preload.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "electron:pack": "npm run build && electron-builder --dir"
+    "probe:steamos": "node scripts/probe-steamos.mjs",
+    "electron:pack": "npm run build && electron-builder --dir",
+    "electron:pack:linux": "npm run build && electron-builder --linux AppImage"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -45,7 +47,7 @@
     "wait-on": "^9.0.10"
   },
   "build": {
-    "appId": "local.naga-trinity-control",
+    "appId": "io.github.knlmn.naga-trinity-control",
     "productName": "Naga Trinity Control",
     "files": [
       "dist",
@@ -53,6 +55,13 @@
     ],
     "mac": {
       "category": "public.app-category.utilities"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility",
+      "artifactName": "Naga-Trinity-Control-${version}-${arch}.${ext}"
     }
   }
 }
